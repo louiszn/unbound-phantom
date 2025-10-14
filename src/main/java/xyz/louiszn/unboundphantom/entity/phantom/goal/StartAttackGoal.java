@@ -1,0 +1,73 @@
+package xyz.louiszn.unboundphantom.entity.phantom.goal;
+
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.ai.TargetPredicate;
+import net.minecraft.entity.ai.goal.Goal;
+import net.minecraft.entity.mob.PhantomEntity;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.SoundEvents;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
+import xyz.louiszn.unboundphantom.entity.phantom.IPhantomEntity;
+import xyz.louiszn.unboundphantom.entity.phantom.PhantomMovementType;
+import xyz.louiszn.unboundphantom.mixin.entity.phantom.PhantomEntityAccessor;
+
+public class StartAttackGoal extends Goal {
+    private int cooldown;
+    private final PhantomEntity phantom;
+
+    public StartAttackGoal(PhantomEntity phantom) {
+        this.phantom = phantom;
+    }
+
+    @Override
+    public boolean canStart() {
+        LivingEntity target = phantom.getTarget();
+        return target != null && TargetPredicate.DEFAULT.test((ServerWorld) phantom.getEntityWorld(), phantom, target);
+    }
+
+    @Override
+    public void start() {
+        this.cooldown = this.getTickCount(10);
+        ((IPhantomEntity) phantom).unbound$setMovementType(PhantomMovementType.WANDER);
+        this.startSwoop();
+    }
+
+    @Override
+    public void stop() {
+        ((IPhantomEntity) phantom).unbound$setMovementType(PhantomMovementType.WANDER);
+    }
+
+    @Override
+    public void tick() {
+        if (((IPhantomEntity) phantom).unbound$getMovementType() == PhantomMovementType.WANDER) {
+            --this.cooldown;
+            if (this.cooldown <= 0) {
+                ((IPhantomEntity) phantom).unbound$setMovementType(PhantomMovementType.SWOOP);
+                this.startSwoop();
+                this.cooldown = this.getTickCount((8 + phantom.getRandom().nextInt(4)) * 20);
+                phantom.playSound(SoundEvents.ENTITY_PHANTOM_SWOOP, 10.0f, 0.95f + phantom.getRandom().nextFloat() * 0.1f);
+            }
+        }
+    }
+
+    private void startSwoop() {
+        LivingEntity target = phantom.getTarget();
+
+        if (target == null) {
+            return;
+        }
+
+        double baseHeightOffset = 30 + phantom.getRandom().nextInt(20);
+        BlockPos ground = phantom.getEntityWorld().getTopPosition(net.minecraft.world.Heightmap.Type.MOTION_BLOCKING, target.getBlockPos());
+        double safeY = Math.max(ground.getY() + 1, target.getY() + baseHeightOffset);
+
+        Vec3d swoopStart = new Vec3d(
+                target.getX(),
+                safeY,
+                target.getZ()
+        );
+
+        ((PhantomEntityAccessor) phantom).setTargetPosition(swoopStart);
+    }
+}

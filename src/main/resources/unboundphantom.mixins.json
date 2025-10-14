@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "package": "xyz.louiszn.unboundphantom.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "ServerWorldMixin",
+    "entity.phantom.PhantomEntityAccessor",
+    "entity.phantom.PhantomEntityMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  }
+}
