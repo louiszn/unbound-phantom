@@ -52,6 +52,17 @@ public class WanderAroundGoal extends Goal {
 
         Vec3d origin = new Vec3d(phantom.getX(), phantom.getY(), phantom.getZ());
 
+        if (!hasSurfaceBelow()) {
+            BlockPos island = findNearestIslandSurface(BlockPos.ofFloored(origin), 128);
+
+            if (island != null) {
+                double targetY = island.getY() + 40 + random.nextDouble() * 30;
+                this.targetPosition = Vec3d.ofBottomCenter(island).add(0, targetY - island.getY(), 0);
+                wasDiving = false;
+                return;
+            }
+        }
+
         double baseRadius = 10 + random.nextDouble() * 20;
         double angle = random.nextDouble() * Math.PI * 2;
 
@@ -124,5 +135,45 @@ public class WanderAroundGoal extends Goal {
         double curvedZ = direction.x * sin + direction.z * cos;
 
         return new Vec3d(curvedX * distance, 0, curvedZ * distance);
+    }
+
+    private boolean hasSurfaceBelow() {
+        BlockPos.Mutable pos = new BlockPos.Mutable();
+
+        pos.set(phantom.getX(), phantom.getY(), phantom.getZ());
+
+        for (int y = pos.getY(); y > pos.getY() - 128 && y > -64; y--) {
+            pos.setY(y);
+
+            if (!phantom.getEntityWorld().isAir(pos)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private BlockPos findNearestIslandSurface(BlockPos origin, int searchRadius) {
+        double closestDist = Double.MAX_VALUE;
+        BlockPos bestPos = null;
+
+        for (int dx = -searchRadius; dx <= searchRadius; dx += 8) {
+            for (int dz = -searchRadius; dz <= searchRadius; dz += 8) {
+                BlockPos checkPos = origin.add(dx, 0, dz);
+                BlockPos surface = phantom.getEntityWorld().getTopPosition(Heightmap.Type.MOTION_BLOCKING, checkPos);
+
+                if (surface.getY() < 10) {
+                    continue;
+                }
+
+                double distSq = surface.getSquaredDistance(origin);
+                if (distSq < closestDist) {
+                    closestDist = distSq;
+                    bestPos = surface;
+                }
+            }
+        }
+
+        return bestPos;
     }
 }
