@@ -47,8 +47,7 @@ public class RetaliateWhenHurtGoal extends Goal {
             return;
         }
 
-        int amount = 1 + phantom.getRandom().nextInt(Math.min(3, 6));
-        int count = Math.min(6, amount);
+        int count = Math.min(1 + phantom.getRandom().nextInt(3), nearbyPhantoms.size());
 
         for (int i = 0; i < count; i++) {
             PhantomEntity ally = nearbyPhantoms.get(i);
