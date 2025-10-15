@@ -5,7 +5,8 @@
   "mixins": [
     "ServerWorldMixin",
     "entity.phantom.PhantomEntityAccessor",
-    "entity.phantom.PhantomEntityMixin"
+    "entity.phantom.PhantomEntityMixin",
+    "entity.phantom.PhantomMoveControlMixin"
   ],
   "injectors": {
     "defaultRequire": 1
